@@ -1,12 +1,29 @@
-# Interview notes
+# AI 视频工作流引擎 — 面试讲述卡
 
-1. **Why?** To make ai video workflow engine an inspectable portfolio artifact.
-2. **Hardest problem?** Failure and retry states.
-3. **Why this architecture?** Keep policy and workflow logic independent from transport and external providers.
-4. **Where is AI?** The design marks provider boundaries; any disconnected model remains unverified.
-5. **What stays human?** Final review, business truth and any external release decision.
-6. **How verified?** Run the tests and sample commands in README; inspect their exact scope.
-7. **Failure learned?** The mock output is not a finished video.
-8. **Redo?** Add reviewed cases and a narrower production migration path.
-9. **Production scale?** Add real auth, durable storage, observability, privacy review and provider-backed evals where relevant.
-10. **My contribution?** Independent clean-room code, tests, docs and public release; no company source copied.
+## 60 秒
+
+我做这个自建项目是为了解决“素材检索、缺口、渲染与质检不能靠单次成功假设串联”。用 Python、FFmpeg、状态机 做了素材检索与缺口报告、真实 FFmpeg 渲染适配器、字幕/时间线、QA 和人工复核闸门。最难的是把失败/重试和未经过人工验收的成片状态分开。目前证据是25 项测试与可播放的 6 秒合成 MP4；QA 状态 HUMAN_REVIEW。但视频使用合成卡片和音调，不是客户成片或 AI 模型生成效果；如果真实落地，下一步是接真实素材授权、渲染队列、可观测性、成片人审和交付验收。
+
+## 3 分钟
+
+先演示核心路径：素材检索与缺口报告、真实 FFmpeg 渲染适配器、字幕/时间线、QA 和人工复核闸门。再打开仓库中的测试与案例页，解释为什么把状态/证据留在可检查的位置。重点讲一个取舍：把失败/重试和未经过人工验收的成片状态分开。最后明确验证范围：25 项测试与可播放的 6 秒合成 MP4；QA 状态 HUMAN_REVIEW；本次验证渲染与确定性 QA，不宣称生成式视频质量。不把演示、合成样本和生产效果混为一谈。
+
+## 10 分钟技术深挖
+
+1. 展示 README 的 Quick Start 与架构图/目录。
+2. 从一个输入走到状态变化或输出，指出 素材检索与缺口报告、真实 FFmpeg 渲染适配器、字幕/时间线、QA 和人工复核闸门 对应的源代码。
+3. 现场说明最难问题：把失败/重试和未经过人工验收的成片状态分开；对照测试或复现步骤。
+4. 解释失败路径及限制：视频使用合成卡片和音调，不是客户成片或 AI 模型生成效果。
+5. 用 接真实素材授权、渲染队列、可观测性、成片人审和交付验收 说明真正上线的优先级和验收证据。
+
+## 九个常见追问
+
+1. **为什么这样设计架构？** 为了把 素材检索与缺口报告、真实 FFmpeg 渲染适配器、字幕/时间线、QA 和人工复核闸门 的核心规则与展示/外部依赖分开，便于检查失败边界。
+2. **最难的 bug/取舍？** 把失败/重试和未经过人工验收的成片状态分开；请指向对应测试或演示复现，避免编造线上事故。
+3. **用了什么框架？** Python、FFmpeg、状态机。选型服务于静态或离线演示，不等同生产选型结论。
+4. **上线还差什么？** 接真实素材授权、渲染队列、可观测性、成片人审和交付验收。
+5. **如何防止误用？** 视频使用合成卡片和音调，不是客户成片或 AI 模型生成效果；任何不可逆外部动作需人工确认。
+6. **怎么测试？** 25 项测试与可播放的 6 秒合成 MP4；QA 状态 HUMAN_REVIEW。先跑 README 命令，再看具体断言，不把 200 或编译当成产品验收。
+7. **AI 在哪里？** 本次验证渲染与确定性 QA，不宣称生成式视频质量。不要把确定性规则、提示词或可选模型接口说成已验证的 AI 效果。
+8. **哪些是 Mock？** 视频使用合成卡片和音调，不是客户成片或 AI 模型生成效果。
+9. **模型怎么评测？个人贡献是什么？** 本次验证渲染与确定性 QA，不宣称生成式视频质量。我负责公开仓库里可见的实现、测试和说明；未核验的业务结果与第三方工作不纳入我的贡献。

@@ -1,15 +1,21 @@
-# Resume bullets
+# AI 视频工作流引擎 — 中文简历项目要点
 
-These bullets describe the public synthetic demo only. Do not claim production use.
+仅描述公开仓库内可核查的自建演示；按岗位挑选，勿三版叠加。证据与边界以 README、测试和 [case study](case-study.md) 为准。
 
-## 中文简历版本
+## AI Engineer / FDE
 
-- 独立实现视频工作流状态机；使用 Python 建立素材检索、缺口、渲染适配与人工 QA；24 项测试通过。
-- 设计可复用的输入、状态与失败边界；通过仓库 README、架构图与示例输出展示实现方式。
-- 区分离线测试、合成夹具和真实外部验证；避免将 Mock 结果写成生产效果。
+- 围绕“素材检索、缺口、渲染与质检不能靠单次成功假设串联”，用 Python、FFmpeg、状态机 实现素材检索与缺口报告、真实 FFmpeg 渲染适配器、字幕/时间线、QA 和人工复核闸门。
+- 验证：25 项测试与可播放的 6 秒合成 MP4；QA 状态 HUMAN_REVIEW；本次验证渲染与确定性 QA，不宣称生成式视频质量。
+- 明确边界：视频使用合成卡片和音调，不是客户成片或 AI 模型生成效果。
 
-## English resume version
+## AI Product / Solution
 
-- Implemented a synthetic video workflow engine in Python with asset retrieval, render adapters, QA and human gate; 24 tests pass.
-- Documented the architecture, state transitions and failure paths with runnable examples and repository evidence.
-- Separated local verification, synthetic fixtures and unverified external integrations in the public handoff.
+- 将“素材检索、缺口、渲染与质检不能靠单次成功假设串联”拆成可点击的用户流程，交付素材检索与缺口报告、真实 FFmpeg 渲染适配器、字幕/时间线、QA 和人工复核闸门。
+- 用可运行 Demo、测试和案例页说明实现与限制；25 项测试与可播放的 6 秒合成 MP4；QA 状态 HUMAN_REVIEW。
+- 为客户化落地列出前置条件：接真实素材授权、渲染队列、可观测性、成片人审和交付验收。
+
+## 实习 / 校招
+
+- 独立完成AI 视频工作流引擎的公开演示、代码、测试和文档，技术栈为 Python、FFmpeg、状态机。
+- 解决“把失败/重试和未经过人工验收的成片状态分开”，保留可复核的验证：25 项测试与可播放的 6 秒合成 MP4；QA 状态 HUMAN_REVIEW。
+- 不把演示包装成上线业务：视频使用合成卡片和音调，不是客户成片或 AI 模型生成效果。
