@@ -1,0 +1,1 @@
+{"title":"Synthetic product explainer","state":"HUMAN_REVIEW","gaps":[],"failures":[],"output":"output/demo.json","cost_usd":0,"budget_usd":0,"retries":0,"events":["SCRIPT","GROUNDED","STORYBOARD","MATERIAL","TIMELINE_PLANNED","RENDERED","QA:PASS","AWAITING_HUMAN_REVIEW"],"synthetic_unverified":true}

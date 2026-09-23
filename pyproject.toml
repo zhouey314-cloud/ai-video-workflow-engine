@@ -1,0 +1,8 @@
+[project]
+name = "ai-video-workflow-engine"
+version = "0.1.0"
+requires-python = ">=3.10"
+description = "Offline synthetic video production workflow"
+
+[project.scripts]
+video-workflow = "video_workflow.cli:main"
