@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+import shutil
 from pathlib import Path
 from video_workflow.engine import *
 
@@ -31,4 +32,18 @@ class WorkflowTests(unittest.TestCase):
     def test_22_approve(self):j,_=fixture();j.state=State.HUMAN_REVIEW;approve(j,'Human');self.assertEqual(j.state,State.APPROVED)
     def test_23_render_failure(self):j,a=fixture();self.assertEqual(run(j,a,ExternalProviderInterface(),Path('x'))['state'],'FAILED')
     def test_24_retry_count(self):j,a=fixture();run(j,a,ExternalProviderInterface(),Path('x'));self.assertEqual(j.retries,1)
+    @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'),'FFmpeg/ffprobe required')
+    def test_25_real_render_and_media_qa(self):
+        j,a=fixture()
+        with tempfile.TemporaryDirectory() as d:
+            path=Path(d)/'demo.mp4'
+            result=run(j,a,LocalFFmpegProvider(),path)
+            self.assertEqual(result['state'],'HUMAN_REVIEW')
+            self.assertEqual(result['failures'],[])
+            self.assertTrue(path.with_suffix('.srt').exists())
+            self.assertTrue(path.with_suffix('.timeline.json').exists())
+            self.assertTrue(path.with_suffix('.png').exists())
+            streams=probe_media(path)['streams']
+            self.assertTrue(any(s['codec_type']=='video' for s in streams))
+            self.assertTrue(any(s['codec_type']=='audio' for s in streams))
 if __name__=='__main__':unittest.main()

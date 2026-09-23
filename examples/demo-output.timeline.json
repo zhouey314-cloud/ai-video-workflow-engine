@@ -1,0 +1,18 @@
+[
+  {
+    "shot_id": "opening",
+    "asset_id": "shape-a",
+    "start_seconds": 0.0,
+    "duration_seconds": 3,
+    "end_seconds": 3.0,
+    "synthetic": true
+  },
+  {
+    "shot_id": "closing",
+    "asset_id": "shape-b",
+    "start_seconds": 3.0,
+    "duration_seconds": 3,
+    "end_seconds": 6.0,
+    "synthetic": true
+  }
+]

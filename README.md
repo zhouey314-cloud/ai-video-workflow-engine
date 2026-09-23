@@ -6,7 +6,17 @@ Independent clean-room framework for synthetic video production. No company pipe
 
 ## Demo and quick start
 
-Python 3.10+: `python3 -m unittest discover -s tests -v`; `python3 -m video_workflow.cli`. The mock run writes `output/demo.json` and `output/report.json`. `--provider ffmpeg` renders a plain color placeholder if local FFmpeg is installed. `--provider external` reports `NOT_CONFIGURED` and fails closed.
+Python 3.10+: `python3 -m unittest discover -s tests -v`; `python3 -m video_workflow.cli`. The mock run writes `output/demo.json` and `output/report.json`. The real synthetic FFmpeg run:
+
+```bash
+python3 -m video_workflow.cli --provider ffmpeg --media-output examples/demo-output.mp4 --output examples/demo-qa.json
+```
+
+This walks synthetic input → storyboard → asset-tag retrieval → timeline → two distinct title-card shots → burned test subtitles + generated tone → render → ffprobe QA → human-review gate. [Watch the 6-second synthetic MP4](examples/demo-output.mp4) (72 KB). [Opening frame](examples/demo-output.png) · [closing frame](examples/demo-frame-2.png) · [captions](examples/demo-output.srt) · [timeline](examples/demo-output.timeline.json) · [QA report](examples/demo-qa.json). To reproduce the closing frame: `ffmpeg -ss 4 -i examples/demo-output.mp4 -frames:v 1 examples/demo-frame-2.png`. `--provider external` remains `NOT_CONFIGURED` and fails closed.
+
+![Opening synthetic title card](examples/demo-output.png)
+
+![Closing synthetic title card](examples/demo-frame-2.png)
 
 ## Problem, architecture and features
 
@@ -14,7 +24,7 @@ Input → Script → Persona/Grounding → Storyboard → licensed synthetic mat
 
 ## Verification and boundaries
 
-24 deterministic tests cover state, retrieval, missing material, QA, provider configuration and review gates. `HUMAN_REVIEW` means a mechanical QA pass, not video quality approval. There is no AI model eval or paid video API. All examples are `synthetic_unverified`; real footage and publishing are outside scope. See [resume bullets](docs/resume-bullets.md) and [interview notes](docs/interview-notes.md).
+25 deterministic tests cover state, retrieval, missing material, real FFmpeg render, media stream/duration QA, provider configuration and review gates. `HUMAN_REVIEW` means a mechanical QA pass, not video quality approval. The committed MP4 was visually spot-checked at opening/closing frames; it has not been approved by an external reviewer. There is no AI model eval or paid video API. All examples are `synthetic_unverified`; real footage and publishing are outside scope. See [resume bullets](docs/resume-bullets.md) and [interview notes](docs/interview-notes.md).
 
 ## Roadmap and license
 
