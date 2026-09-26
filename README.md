@@ -1,6 +1,12 @@
 # AI Video Workflow Engine
 
+**A reproducible video-workflow engine from asset checks to a real FFmpeg render and human QA gate.** It solves the handoff problem where a file exists but the inputs, failure state or approval are unclear.
+
 **OFFLINE_ENGINEERING_DEMO / HUMAN_REVIEW** · [Watch synthetic MP4](examples/demo-output.mp4) · [Case study](docs/case-study.md) · [Resume bullets](docs/resume-bullets.md) · [Interview notes](docs/interview-notes.md)
+
+[![CI](https://github.com/zhouey314-cloud/ai-video-workflow-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/zhouey314-cloud/ai-video-workflow-engine/actions/workflows/ci.yml)
+
+![Opening frame of the reproducible six-second synthetic FFmpeg sample](examples/demo-output.png)
 
 Independent clean-room framework for synthetic video production. No company pipeline source, customer media, voice data, internal prompt or paid provider call is included.
 
