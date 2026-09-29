@@ -34,6 +34,8 @@ Input → Script → Persona/Grounding → Storyboard → licensed synthetic mat
 
 25 deterministic tests cover state, retrieval, missing material, real FFmpeg render, media stream/duration QA, provider configuration and review gates. `HUMAN_REVIEW` means a mechanical QA pass, not video quality approval. The committed MP4 was visually spot-checked at opening/closing frames; it has not been approved by an external reviewer. There is no AI model eval or paid video API. All examples are `synthetic_unverified`; real footage and publishing are outside scope. See [resume bullets](docs/resume-bullets.md) and [interview notes](docs/interview-notes.md).
 
-## Roadmap and license
+## Maintenance and release status
 
-Add real storyboard visual validation, frame/audio QA and provider cost receipts before production integration. MIT.
+The current source metadata is `0.1.0` in `pyproject.toml`. A historical GitHub `v1.0.0` demo Release exists; it does not establish production maturity, and no new version is proposed until that numbering conflict is resolved. See the [capability roadmap](ROADMAP.md), [changelog](CHANGELOG.md), [contribution guide](CONTRIBUTING.md), and [release checklist](docs/releases/RELEASE_CHECKLIST.md). New Release publication requires a separate decision.
+
+MIT. See [LICENSE](LICENSE).
