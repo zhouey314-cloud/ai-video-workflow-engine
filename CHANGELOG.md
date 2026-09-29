@@ -5,7 +5,7 @@ This file records source changes; a passing test is not human video approval.
 ## Unreleased
 
 - Added maintenance, contribution, issue/PR, and release-checklist documentation.
-- CI now requires FFmpeg and ffprobe before running the real-render test.
+- CI installs FFmpeg and a supported font, then requires FFmpeg/ffprobe before the real-render test.
 - No rendering behavior or public Release was changed.
 
 ## Historical public demo release
