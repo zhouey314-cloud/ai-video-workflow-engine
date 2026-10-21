@@ -1,0 +1,75 @@
+{
+  "origin": "New original procedural drawing, animation and mathematical music authored for this sample; not real footage or speech",
+  "license": "SELF; code is covered by repository MIT, generated original media may be redistributed under the repository MIT license; font rights remain separate",
+  "third_party_media": false,
+  "voices_or_models": false,
+  "music": {
+    "bpm": 120,
+    "rate": 48000,
+    "channels": 2,
+    "composition": "original arpeggio/bass/synthetic percussion; no melody reference or recording"
+  },
+  "font": {
+    "name": "NotoSansCJKsc-Bold.otf",
+    "sha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
+    "bundled": false,
+    "operator_must_preserve_license": true,
+    "glyph_mask_checked_codepoints": 126
+  },
+  "human_review": "PENDING; machine checks cannot approve this film",
+  "files": [
+    {
+      "file": "original-score.wav",
+      "sha256": "c5545e033e5faaa63f4257503d4ab8da922e6afd4cc2d8ae31a39908a53718d1",
+      "bytes": 10368044
+    },
+    {
+      "file": "shot-01.mp4",
+      "sha256": "b6755156e1a28ae099fa3e4ba01f3fbf860fd1106459c86491418538114f1c27",
+      "bytes": 543834
+    },
+    {
+      "file": "shot-02.mp4",
+      "sha256": "cc41485b20eefe7ad626eb67fae01c9947570ce2d9acea47ce5817eed779a708",
+      "bytes": 412029
+    },
+    {
+      "file": "shot-03.mp4",
+      "sha256": "77f6dc66d660b6f47221d3df27739401d7218c667a21602e67abbe35eecdc4dd",
+      "bytes": 291168
+    },
+    {
+      "file": "shot-04.mp4",
+      "sha256": "125d584f0f60d581435fc579d675ff4d809f03cc10cd20d89ed905e39a91a403",
+      "bytes": 210473
+    },
+    {
+      "file": "shot-05.mp4",
+      "sha256": "c482a421091c230e7eb7d2aa6f7b577784b6e399511c1a3f02d78fd3733a251f",
+      "bytes": 1065501
+    },
+    {
+      "file": "shot-06.mp4",
+      "sha256": "5eb3651193e72135ec1fa98edc14687af1c106662eb3357891ddd97fce4e9872",
+      "bytes": 421019
+    },
+    {
+      "file": "shot-07.mp4",
+      "sha256": "9387a333c296517eaf90b10fa411975057d7d0d5fee2400e615e27fe2e044c4d",
+      "bytes": 263917
+    },
+    {
+      "file": "shot-08.mp4",
+      "sha256": "4873e03e3f90806040783d62912dde7311951822adc5f2e8724da9df88d58850",
+      "bytes": 343630
+    },
+    {
+      "file": "shot-09.mp4",
+      "sha256": "78295c712e86a6c5ea7636a7d50f97b61ad78f20d379a222e9ca5ffc7cc4c2b3",
+      "bytes": 368247
+    }
+  ],
+  "generated_inputs_committed": false,
+  "reproduce": "python examples/original_54s/generate.py --output output/original54 --font /path/to/licensed-CJK-font",
+  "generator_sha256": "0221ac7632c08fabdf75273f0470924086377f151a95e33da76c2aec7d7f80f8"
+}

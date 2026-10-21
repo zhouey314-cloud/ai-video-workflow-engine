@@ -2,7 +2,7 @@
 
 **A reproducible video-workflow engine from asset checks to a real FFmpeg render and human QA gate.** It solves the handoff problem where a file exists but the inputs, failure state or approval are unclear.
 
-**OFFLINE_ENGINEERING_DEMO / HUMAN_REVIEW** · [Watch synthetic MP4](examples/demo-output.mp4) · [Case study](docs/case-study.md) · [Resume bullets](docs/resume-bullets.md) · [Interview notes](docs/interview-notes.md)
+**OFFLINE_ENGINEERING_DEMO / HUMAN_REVIEW** · [Watch 54-second original animation](examples/original_54s/sample.mp4) · [Six-second compatibility fixture](examples/demo-output.mp4) · [Case study](docs/case-study.md) · [Resume bullets](docs/resume-bullets.md) · [Interview notes](docs/interview-notes.md)
 
 [![CI](https://github.com/zhouey314-cloud/ai-video-workflow-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/zhouey314-cloud/ai-video-workflow-engine/actions/workflows/ci.yml)
 
@@ -28,13 +28,17 @@ The CLI writes the workflow JSON report to `--output` and stdout before exiting.
 
 ![Closing synthetic title card](examples/demo-frame-2.png)
 
+## Original 54-second sample
+
+[Watch Cut / Set / Deliver](examples/original_54s/sample.mp4) · [reproduce and license](examples/original_54s/README.md) · [actual frame contact sheet](examples/original_54s/contact-sheet.jpg) · [mechanical QA](examples/original_54s/sample.qa.json) · [asset provenance](examples/original_54s/ASSET_MANIFEST.json). Nine independently animated scenes use original procedural scenery, moving paper storyboards, an aperture, actual score waveform, transitions, a QA scan and recovery graphics. The original 120-BPM mathematical score contains no recording or voice. The existing FFmpeg provider consumes these SELF video assets and soundtrack through editable generated storyboard/asset JSON, burns Chinese captions and keeps the human-review gate. The 54.000-second local H264/AAC render is 1280×720 at 24fps, with a measured −7.8dBFS sample peak, full decode and no detected black interval >=0.30s. This is program animation, not a customer video or human talking head. Full-film user approval is still pending. CI runs a 4.5-second integration fixture, not this complete 54-second rendering or human review.
+
 ## Problem, architecture and features
 
 Input → Script → Persona/Grounding → Storyboard → licensed synthetic material retrieval → gap detection → optional generation request → timeline plan → render adapter → QA → human review. The implementation models each state, validates a storyboard, checks license and synthetic tags, records failures, enforces a zero dollar budget and requires a named human to approve. See [architecture](docs/architecture.md), [sample storyboard](examples/storyboard.json) and [sample report](examples/sample-report.json).
 
 ## Verification and boundaries
 
-41 tests cover state, retrieval, missing material, real FFmpeg render, media stream/duration QA, provider configuration and review gates. The five delivery regressions add special-character output paths, explicit invalid-font failure without overwriting an existing artifact, recovery after a blocked destination, long Chinese captions and black/clipped media rejection. Existing CLI success/failure/GAP exit behavior is retained.
+46 tests cover state, retrieval, missing material, real FFmpeg render, media stream/duration QA, provider configuration and review gates. Five delivery regressions add special-character output paths, explicit invalid-font failure without overwriting an existing artifact, recovery after a blocked destination, long Chinese captions and black/clipped media rejection. Existing CLI success/failure/GAP exit behavior is retained. Five additional original-sample integration cases use real 4.5-second encodes of all nine scenes, checking licensed audio/video input, missing material, dense-caption rejection and missing-glyph failure. Install the optional sample dependency before running all 46 tests: `python -m pip install -r examples/original_54s/requirements.txt`.
 
 MP4 QA now decodes the complete file, checks black intervals of at least 0.30 seconds, measures sample audio peak (limit −0.5 dBFS), records mean volume and verifies expected resolution/duration/audio. Subtitles use a private fixed-name ASS/font workspace; user paths never enter FFmpeg filter syntax. A separate render of the identical subtitle layer measures actual libass glyph pixel bounds at 2 fps, including wrapping and missing-glyph diagnostics. This measures subtitle-layer geometry, not readability or full-frame visual quality. `--font /path/to/font.ttf` selects an available local font; `--storyboard` and `--assets` choose explicit input files. Missing/invalid input produces a nonzero JSON failure. Over-dense captions are rejected rather than truncated. FFmpeg failures preserve an existing MP4; generated sidecars are promoted only after FFmpeg completes.
 
