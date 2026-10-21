@@ -1,0 +1,16 @@
+{
+  "status": "APPROVED",
+  "reviewer": "user",
+  "approval_date": "2026-10-21",
+  "artifact": "sample.mp4",
+  "sha256": "0a7f73e9a5a014a352aa5f27a2852b39e558546ccc38f93016785cf2fba0e1a9",
+  "scope": "User confirmed viewing and approved this exact 54-second original procedural animation with self-composed music for portfolio use.",
+  "machine_qa_record": "sample.qa.json",
+  "machine_state_preserved": "HUMAN_REVIEW",
+  "limits": [
+    "Applies only to these exact artifact bytes; edits require another review",
+    "Not human talking-head footage or customer production acceptance",
+    "No model quality, voice cloning, commercial deployment or broader template approval implied"
+  ],
+  "private_chat_text_published": false
+}

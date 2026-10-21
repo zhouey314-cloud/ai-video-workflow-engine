@@ -16,7 +16,6 @@
     "operator_must_preserve_license": true,
     "glyph_mask_checked_codepoints": 126
   },
-  "human_review": "PENDING; machine checks cannot approve this film",
   "files": [
     {
       "file": "original-score.wav",
@@ -71,5 +70,14 @@
   ],
   "generated_inputs_committed": false,
   "reproduce": "python examples/original_54s/generate.py --output output/original54 --font /path/to/licensed-CJK-font",
-  "generator_sha256": "0221ac7632c08fabdf75273f0470924086377f151a95e33da76c2aec7d7f80f8"
+  "generator_sha256": "0221ac7632c08fabdf75273f0470924086377f151a95e33da76c2aec7d7f80f8",
+  "human_review_at_generation": "PENDING; machine checks cannot approve this film",
+  "delivery_state": "APPROVED",
+  "human_review_record": "human-review.json",
+  "approved_artifact": {
+    "file": "sample.mp4",
+    "sha256": "0a7f73e9a5a014a352aa5f27a2852b39e558546ccc38f93016785cf2fba0e1a9",
+    "approval_date": "2026-10-21",
+    "scope": "exact original animation for portfolio use"
+  }
 }

@@ -1,9 +1,11 @@
-# Cut / Set / Deliver — 54 seconds, pending human review
+# Cut / Set / Deliver — approved 54-second original animation
 
 Nine original procedural-animation shots demonstrate planning, source provenance,
 subtitle layout, music, transitions, output checks, recovery and full-film review.
 This is **not human talking-head footage, a customer video or a production claim**.
 No model, paid API, TTS, private voice, stock clip or downloaded recording is used.
+
+The user approved the exact [sample.mp4](sample.mp4) on 2026-10-21 for portfolio use. [human-review.json](human-review.json) binds that decision to SHA256 `0a7f73e9a5a014a352aa5f27a2852b39e558546ccc38f93016785cf2fba0e1a9`. The original [machine QA](sample.qa.json) remains `HUMAN_REVIEW`; the on-screen handoff label is part of the film, not an automatic approval. Subsequent renders are unapproved until separately reviewed.
 
 The score is an original 120-BPM mathematical arpeggio/bass/percussion composition.
 Drawings and score are SELF assets, redistributable under this repository's MIT
@@ -47,5 +49,5 @@ Black detection covers intervals at least 0.30 seconds. Audio peak is a sample
 peak, not a true-peak/loudness certification. Caption-layer pixel bounds are
 sampled at 2fps, not every full frame. Assistant frame spot-checks and mechanical
 metrics do not establish human full-film approval. Readability, rhythm, musical
-quality, complete viewing and final `APPROVED / REJECTED` remain the user's gate.
+quality and complete viewing require the user's `APPROVED / REJECTED` decision. The committed exact sample has that user approval; the generated template and future outputs do not inherit it.
 No reviewer name or approval may be invented. No automatic publishing is added.
