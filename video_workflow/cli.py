@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
-from .engine import Asset,Shot,Job,MockProvider,LocalFFmpegProvider,ExternalProviderInterface,run
-def main():
+from .engine import Asset,Shot,Job,State,MockProvider,LocalFFmpegProvider,ExternalProviderInterface,run
+def main() -> int:
     import argparse
     p=argparse.ArgumentParser();p.add_argument('--provider',choices=['mock','ffmpeg','external'],default='mock');p.add_argument('--output',default='output/report.json');p.add_argument('--media-output',default='output/demo.mp4');args=p.parse_args()
     data=json.loads(Path('examples/storyboard.json').read_text())
@@ -12,4 +12,5 @@ def main():
     result=run(job,assets,provider,output)
     Path(args.output).parent.mkdir(parents=True,exist_ok=True);Path(args.output).write_text(json.dumps(result,indent=2))
     print(json.dumps(result,indent=2))
-if __name__=='__main__': main()
+    return 0 if result['state'] in (State.HUMAN_REVIEW.value,State.APPROVED.value) else 1
+if __name__=='__main__': raise SystemExit(main())

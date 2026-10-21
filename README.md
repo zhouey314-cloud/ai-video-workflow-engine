@@ -22,6 +22,8 @@ python3 -m video_workflow.cli --provider ffmpeg --media-output examples/demo-out
 
 This walks synthetic input → storyboard → asset-tag retrieval → timeline → two distinct title-card shots → burned test subtitles + generated tone → render → ffprobe QA → human-review gate. [Watch the 6-second synthetic MP4](examples/demo-output.mp4) (72 KB). [Opening frame](examples/demo-output.png) · [closing frame](examples/demo-frame-2.png) · [captions](examples/demo-output.srt) · [timeline](examples/demo-output.timeline.json) · [QA report](examples/demo-qa.json). To reproduce the closing frame: `ffmpeg -ss 4 -i examples/demo-output.mp4 -frames:v 1 examples/demo-frame-2.png`. `--provider external` remains `NOT_CONFIGURED` and fails closed.
 
+The CLI writes the workflow JSON report to `--output` and stdout before exiting. Exit code `0` means mechanical QA passed and the workflow reached `HUMAN_REVIEW` (or `APPROVED` if supplied by the workflow); pending human review is a successful CLI run, not human approval. Exit code `1` means the workflow failed or stopped with a material `GAP`. Use the JSON `state`, `failures`, and `events` to diagnose the result.
+
 ![Opening synthetic title card](examples/demo-output.png)
 
 ![Closing synthetic title card](examples/demo-frame-2.png)
@@ -32,7 +34,7 @@ Input → Script → Persona/Grounding → Storyboard → licensed synthetic mat
 
 ## Verification and boundaries
 
-25 deterministic tests cover state, retrieval, missing material, real FFmpeg render, media stream/duration QA, provider configuration and review gates. `HUMAN_REVIEW` means a mechanical QA pass, not video quality approval. The committed MP4 was visually spot-checked at opening/closing frames; it has not been approved by an external reviewer. There is no AI model eval or paid video API. All examples are `synthetic_unverified`; real footage and publishing are outside scope. See [resume bullets](docs/resume-bullets.md) and [interview notes](docs/interview-notes.md).
+36 tests cover state, retrieval, missing material, real FFmpeg render, media stream/duration QA, provider configuration and review gates, including process-level CLI exit codes and JSON reports for success, material gaps, unconfigured providers, render errors, and QA failure. `HUMAN_REVIEW` means a mechanical QA pass, not video quality approval. The committed MP4 was visually spot-checked at opening/closing frames; it has not been approved by an external reviewer. There is no AI model eval or paid video API. All examples are `synthetic_unverified`; real footage and publishing are outside scope. See [resume bullets](docs/resume-bullets.md) and [interview notes](docs/interview-notes.md).
 
 ## Maintenance and release status
 
