@@ -3,6 +3,12 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 import json
+import hashlib
+import math
+import os
+import sys
+import unicodedata
+from .media_qa import measure_media, measure_caption_pixels
 import shutil
 import subprocess
 import tempfile
@@ -27,6 +33,15 @@ class Shot:
     requested_tag: str
     narration: str
 
+@dataclass(frozen=True)
+class RenderConfig:
+    width: int = 640
+    height: int = 360
+    fps: int = 24
+    font_path: str | None = None
+    font_family: str | None = None
+    caption_font_size: int | None = None
+
 @dataclass
 class Job:
     title: str
@@ -39,6 +54,8 @@ class Job:
     cost_usd: float=0.0
     retries: int=0
     output: str|None=None
+    render: RenderConfig=field(default_factory=RenderConfig)
+    media_qa: dict=field(default_factory=dict)
 
 class Provider:
     def render(self, job:Job, assets:list[Asset], destination:Path)->str:
@@ -54,41 +71,92 @@ class ExternalProviderInterface(Provider):
     def render(self, job:Job, assets:list[Asset], destination:Path)->str:
         raise RuntimeError("NOT_CONFIGURED")
 
+def _timestamp(seconds: float, ass: bool = False) -> str:
+    ms = round(seconds*1000)
+    h, ms = divmod(ms, 3600000); m, ms = divmod(ms, 60000); sec, ms = divmod(ms, 1000)
+    return f"{h}:{m:02d}:{sec:02d}.{ms//10:02d}" if ass else f"{h:02d}:{m:02d}:{sec:02d},{ms:03d}"
+
+
+def _caption_lines(text: str, width: int, font_size: int) -> list[str]:
+    limit = int(width * 0.84 / (font_size * 0.55))
+    lines = []; line = ''; units = 0
+    for char in text:
+        size = 2 if unicodedata.east_asian_width(char) in {'W','F'} else 1
+        if char == '\n' or (line and units+size > limit):
+            lines.append(line); line = ''; units = 0
+        if char != '\n': line += char; units += size
+    if line: lines.append(line)
+    if len(lines) > 3: raise ValueError('CAPTION_TOO_DENSE: split the shot text; maximum three lines')
+    return lines
+
+
 class LocalFFmpegProvider(Provider):
     def render(self, job:Job, assets:list[Asset], destination:Path)->str:
-        if not shutil.which("ffmpeg"): raise RuntimeError("NOT_CONFIGURED: ffmpeg")
-        if not shutil.which("ffprobe"): raise RuntimeError("NOT_CONFIGURED: ffprobe")
-        destination.parent.mkdir(parents=True,exist_ok=True)
-        font=next((p for p in ("/System/Library/Fonts/Supplemental/Verdana.ttf","/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf") if Path(p).exists()),None)
-        if not font:raise RuntimeError("NOT_CONFIGURED: font")
-        palette=[("0x102c45","0x26c6b5"),("0x172b47","0xffb36a"),("0x25304e","0x91a7ff")]
-        timeline=[];elapsed=0.0
-        with tempfile.TemporaryDirectory(prefix="video-workflow-") as scratch:
-            tmp=Path(scratch);parts=[]
+        for binary in ('ffmpeg','ffprobe'):
+            if not shutil.which(binary): raise RuntimeError('NOT_CONFIGURED: '+binary)
+        cfg = job.render
+        candidates = ([cfg.font_path] if cfg.font_path else [
+            '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+            '/System/Library/Fonts/STHeiti Medium.ttc',
+            '/System/Library/Fonts/Supplemental/Verdana.ttf',
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'])
+        font = next((Path(p) for p in candidates if p and Path(p).is_file()), None)
+        if not font: raise RuntimeError('NOT_CONFIGURED: font')
+        family = cfg.font_family or ('Noto Sans CJK SC' if 'Noto' in font.name else
+            'Heiti SC' if 'Heiti' in font.name else 'Verdana' if 'Verdana' in font.name else 'DejaVu Sans')
+        destination = destination.resolve()
+        if destination.suffix.lower() != '.mp4': raise ValueError('MP4_OUTPUT_REQUIRED')
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        if destination.is_dir(): raise IsADirectoryError(str(destination))
+        timeline = []; elapsed = 0.0
+        with tempfile.TemporaryDirectory(prefix='video-workflow-', dir=destination.parent) as scratch:
+            tmp = Path(scratch); (tmp/'fonts').mkdir()
+            copied_font = Path('fonts') / ('workflow'+font.suffix)
+            shutil.copyfile(font, tmp/copied_font)
+            palette=[('0x102c45','0x26c6b5'),('0x172b47','0xffb36a'),('0x25304e','0x91a7ff')]
+            parts=[]; size=cfg.caption_font_size or round(cfg.height/15)
+            ass = (f'[Script Info]\nScriptType: v4.00+\nPlayResX: {cfg.width}\nPlayResY: {cfg.height}\nWrapStyle: 0\n'
+                '[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n'
+                f'Style: Default,{family},{size},&H00F4F4EE,&H00F4F4EE,&H0021374A,&H80000000,0,0,0,0,100,100,0,0,1,2,0,2,{round(cfg.width*.07)},{round(cfg.width*.07)},{round(cfg.height*.08)},1\n'
+                '[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n')
+            srt = ''
+            def execute(args):
+                subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y',*args],cwd=tmp,check=True,timeout=180)
             for i,(shot,asset) in enumerate(zip(job.shots,assets)):
                 background,accent=palette[i%len(palette)]
-                title_file=tmp/f"title-{i}.txt"
-                title_file.write_text("SYNTHETIC WORKFLOW\n"+shot.requested_tag.upper(),encoding="utf-8")
-                clip=tmp/f"shot-{i}.mp4"
-                vf=(f"drawbox=x=36:y=32:w=568:h=296:color={accent}@0.12:t=fill,"
-                    f"drawbox=x=38:y=56:w=9:h=238:color={accent}:t=fill,"
-                    f"drawbox=x=70:y=265:w=490:h=2:color={accent}@0.8:t=fill,"
-                    f"drawtext=fontfile={font}:textfile={title_file}:fontcolor=white:fontsize=32:x=72:y=94:line_spacing=15,"
-                    f"drawtext=fontfile={font}:text=SCENE_{i+1:02d}:fontcolor={accent}:fontsize=16:x=72:y=55")
-                subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-f","lavfi","-i",f"color=c={background}:s=640x360:r=24:d={shot.seconds}","-vf",vf,"-c:v","libx264","-pix_fmt","yuv420p",str(clip)],check=True)
+                (tmp/f'title-{i}.txt').write_text('SYNTHETIC WORKFLOW\n'+shot.requested_tag.upper(),encoding='utf-8')
+                clip=f'shot-{i}.mp4'
+                vf=(f'drawbox=x=36:y=32:w={cfg.width-72}:h={cfg.height-64}:color={accent}@0.12:t=fill,'
+                    f'drawbox=x=38:y=56:w=9:h={cfg.height-122}:color={accent}:t=fill,'
+                    f'drawtext=fontfile={copied_font}:textfile=title-{i}.txt:fontcolor=white:fontsize={round(cfg.height/11)}:x=72:y=94:line_spacing=15')
+                execute(['-f','lavfi','-i',f'color=c={background}:s={cfg.width}x{cfg.height}:r={cfg.fps}:d={shot.seconds}',
+                    '-vf',vf,'-c:v','libx264','-pix_fmt','yuv420p',clip])
                 parts.append(clip)
-                timeline.append({"shot_id":shot.id,"asset_id":asset.id,"start_seconds":elapsed,"duration_seconds":shot.seconds,"end_seconds":elapsed+shot.seconds,"synthetic":True})
+                timeline.append({'shot_id':shot.id,'asset_id':asset.id,'start_seconds':elapsed,
+                    'duration_seconds':shot.seconds,'end_seconds':elapsed+shot.seconds,'synthetic':True})
+                lines=_caption_lines(shot.narration,cfg.width,size)
+                wrapped='\n'.join(lines)
+                srt+=f'{i+1}\n{_timestamp(elapsed)} --> {_timestamp(elapsed+shot.seconds)}\n{wrapped}\n\n'
+                escaped=wrapped.replace('\\','\\\\').replace('{','\\{').replace('}','\\}').replace('\n',r'\N')
+                ass+=f'Dialogue: 0,{_timestamp(elapsed,True)},{_timestamp(elapsed+shot.seconds,True)},Default,,0,0,0,,{escaped}\n'
                 elapsed+=shot.seconds
-            concat_file=tmp/"concat.txt"
-            concat_file.write_text("".join(f"file '{p}'\n" for p in parts),encoding="utf-8")
-            captions=destination.with_suffix(".srt")
-            def timestamp(seconds:float)->str:
-                ms=round(seconds*1000);h,ms=divmod(ms,3600000);m,ms=divmod(ms,60000);s,ms=divmod(ms,1000)
-                return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
-            captions.write_text("".join(f"{i+1}\n{timestamp(item['start_seconds'])} --> {timestamp(item['end_seconds'])}\n{shot.narration}\n\n" for i,(item,shot) in enumerate(zip(timeline,job.shots))),encoding="utf-8")
-            subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-f","concat","-safe","0","-i",str(concat_file),"-f","lavfi","-i",f"sine=frequency=330:sample_rate=48000:duration={elapsed}","-vf",f"subtitles={captions}:force_style='FontSize=19,PrimaryColour=&H00FFFFFF,OutlineColour=&H0021374A,Outline=2,MarginV=25'","-af","volume=0.10","-c:v","libx264","-crf","25","-c:a","aac","-b:a","64k","-pix_fmt","yuv420p","-shortest",str(destination)],check=True)
-        destination.with_suffix(".timeline.json").write_text(json.dumps(timeline,indent=2),encoding="utf-8")
-        subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-ss","1","-i",str(destination),"-frames:v","1",str(destination.with_suffix(".png"))],check=True)
+            (tmp/'captions.srt').write_text(srt,encoding='utf-8');(tmp/'captions.ass').write_text(ass,encoding='utf-8')
+            (tmp/'concat.txt').write_text(''.join(f"file '{part}'\n" for part in parts),encoding='utf-8')
+            caption_bounds=measure_caption_pixels(scratch=tmp,width=cfg.width,height=cfg.height,seconds=elapsed)
+            if not caption_bounds['within_safe_area']: raise ValueError('CAPTIONS_OUT_OF_BOUNDS_OR_INVISIBLE')
+            execute(['-f','concat','-safe','0','-i','concat.txt','-f','lavfi','-i',
+                f'sine=frequency=330:sample_rate=48000:duration={elapsed}',
+                '-vf','subtitles=filename=captions.ass:fontsdir=fonts','-af','volume=0.10',
+                '-c:v','libx264','-crf','25','-c:a','aac','-b:a','96k','-pix_fmt','yuv420p','-shortest','final.mp4'])
+            execute(['-ss',str(min(1,elapsed/2)),'-i','final.mp4','-frames:v','1','preview.png'])
+            (tmp/'timeline.json').write_text(json.dumps(timeline,indent=2),encoding='utf-8')
+            # FFmpeg/filter paths use fixed relative names in a private scratch dir;
+            # user paths never enter filter syntax or concat manifests.
+            for name,suffix in [('captions.srt','.srt'),('captions.ass','.ass'),('timeline.json','.timeline.json'),('preview.png','.png')]:
+                os.replace(tmp/name,destination.with_suffix(suffix))
+            os.replace(tmp/'final.mp4',destination)
+            job.media_qa={'font':{'available':True,'name':family,'sha256':hashlib.sha256(font.read_bytes()).hexdigest()},
+                'caption_pixel_bounds':caption_bounds,'music':{'license':'SELF','source':'mathematical sine tone; compatibility demo, not a finished soundtrack'}}
         return str(destination)
 
 def probe_media(path:Path)->dict:
@@ -97,9 +165,10 @@ def probe_media(path:Path)->dict:
 
 def validate(job:Job)->None:
     if not job.title.strip() or not job.script.strip() or not job.persona.strip(): raise ValueError("missing input")
-    if not job.shots or any(s.seconds<=0 or not s.id for s in job.shots): raise ValueError("invalid storyboard")
+    if not job.shots or any(not math.isfinite(s.seconds) or s.seconds<=0 or not s.id for s in job.shots): raise ValueError("invalid storyboard")
     if len({s.id for s in job.shots})!=len(job.shots): raise ValueError("duplicate shot")
-    if job.budget_usd<0: raise ValueError("invalid budget")
+    if not math.isfinite(job.budget_usd) or job.budget_usd<0: raise ValueError("invalid budget")
+    if job.render.width < 320 or job.render.height < 180 or job.render.width%2 or job.render.height%2 or not 1 <= job.render.fps <= 60: raise ValueError("invalid render dimensions/fps")
 
 def retrieve(shots:list[Shot],assets:list[Asset])->tuple[list[Asset],list[str]]:
     found=[];gaps=[]
@@ -115,16 +184,26 @@ def qa(job:Job)->list[str]:
     if sum(s.seconds for s in job.shots)>60: failures.append("DURATION_EXCEEDS_DEMO_LIMIT")
     if job.cost_usd>job.budget_usd: failures.append("BUDGET_EXCEEDED")
     if any(not s.narration.strip() for s in job.shots): failures.append("NARRATION_MISSING")
-    if job.output and Path(job.output).suffix==".mp4" and Path(job.output).exists():
+    if job.output and Path(job.output).suffix.lower()==".mp4" and Path(job.output).exists():
         try:
-            media=probe_media(Path(job.output))
+            measured=measure_media(Path(job.output))
+            job.media_qa.update(measured)
+            media=measured["probe"]
+            if not measured["full_decode"]: failures.append("MEDIA_DECODE_FAILED")
+            if measured["black_intervals"]: failures.append("BLACK_FRAMES")
+            peak=measured["audio_sample_peak_dbfs"]
+            if peak is None: failures.append("AUDIO_SILENT_OR_UNMEASURED")
+            elif peak > measured["audio_peak_limit_dbfs"]: failures.append("AUDIO_PEAK_EXCEEDED")
+            if not job.media_qa.get("caption_pixel_bounds",{}).get("within_safe_area"): failures.append("CAPTION_BOUNDS_NOT_VERIFIED")
+            if not job.media_qa.get("font",{}).get("available"): failures.append("FONT_NOT_VERIFIED")
+            if job.media_qa.get("music",{}).get("license") not in {"SELF","CC0"}: failures.append("MUSIC_LICENSE_UNVERIFIED")
             streams=media["streams"]
             video=next((s for s in streams if s["codec_type"]=="video"),None)
-            if not video or video.get("width")!=640 or video.get("height")!=360:failures.append("VIDEO_STREAM_INVALID")
+            if not video or video.get("width")!=job.render.width or video.get("height")!=job.render.height:failures.append("VIDEO_STREAM_INVALID")
             if not any(s["codec_type"]=="audio" for s in streams):failures.append("AUDIO_STREAM_MISSING")
             if abs(float(media["format"]["duration"])-sum(s.seconds for s in job.shots))>0.25:failures.append("DURATION_MISMATCH")
             if not Path(job.output).with_suffix(".srt").exists():failures.append("CAPTIONS_MISSING")
-        except (OSError,KeyError,ValueError,subprocess.CalledProcessError):failures.append("MEDIA_PROBE_FAILED")
+        except (OSError,KeyError,ValueError,subprocess.CalledProcessError,subprocess.TimeoutExpired):failures.append("MEDIA_PROBE_FAILED")
     return failures
 
 def run(job:Job,assets:list[Asset],provider:Provider,destination:Path)->dict:
@@ -140,6 +219,7 @@ def run(job:Job,assets:list[Asset],provider:Provider,destination:Path)->dict:
         job.output=provider.render(job,selected,destination)
         job.state=State.RENDERED;job.events.append("RENDERED")
     except Exception as exc:
+        print("RENDER_FAILED:"+str(exc),file=sys.stderr)
         job.retries+=1;job.state=State.FAILED;job.events.append("RENDER_FAILED:"+str(exc))
         return report(job,[],["RENDER_FAILED"])
     failures=qa(job);job.state=State.QA;job.events.append("QA:"+("PASS" if not failures else "FAIL"))
@@ -152,4 +232,4 @@ def approve(job:Job,reviewer:str)->None:
     job.state=State.APPROVED;job.events.append("APPROVED_BY:"+reviewer)
 
 def report(job:Job,gaps:list[str],failures:list[str])->dict:
-    return {"title":job.title,"state":job.state.value,"gaps":gaps,"failures":failures,"output":job.output,"cost_usd":job.cost_usd,"budget_usd":job.budget_usd,"retries":job.retries,"events":job.events,"synthetic_unverified":True}
+    return {"title":job.title,"state":job.state.value,"gaps":gaps,"failures":failures,"output":job.output,"cost_usd":job.cost_usd,"budget_usd":job.budget_usd,"retries":job.retries,"events":job.events,"synthetic_unverified":True,"media_qa":job.media_qa}
