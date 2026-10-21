@@ -25,6 +25,7 @@ class Asset:
     tags: tuple[str,...]
     license: str
     synthetic: bool=True
+    path: str|None=None
 
 @dataclass(frozen=True)
 class Shot:
@@ -41,6 +42,8 @@ class RenderConfig:
     font_path: str | None = None
     font_family: str | None = None
     caption_font_size: int | None = None
+    music_path: str | None = None
+    music_license: str | None = None
 
 @dataclass
 class Job:
@@ -95,6 +98,8 @@ class LocalFFmpegProvider(Provider):
         for binary in ('ffmpeg','ffprobe'):
             if not shutil.which(binary): raise RuntimeError('NOT_CONFIGURED: '+binary)
         cfg = job.render
+        if cfg.music_path and cfg.music_license not in {'SELF','CC0'}: raise ValueError('MUSIC_LICENSE_UNVERIFIED')
+        if cfg.music_path and not Path(cfg.music_path).is_file(): raise ValueError('MUSIC_FILE_MISSING')
         candidates = ([cfg.font_path] if cfg.font_path else [
             '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
             '/System/Library/Fonts/STHeiti Medium.ttc',
@@ -129,8 +134,16 @@ class LocalFFmpegProvider(Provider):
                 vf=(f'drawbox=x=36:y=32:w={cfg.width-72}:h={cfg.height-64}:color={accent}@0.12:t=fill,'
                     f'drawbox=x=38:y=56:w=9:h={cfg.height-122}:color={accent}:t=fill,'
                     f'drawtext=fontfile={copied_font}:textfile=title-{i}.txt:fontcolor=white:fontsize={round(cfg.height/11)}:x=72:y=94:line_spacing=15')
-                execute(['-f','lavfi','-i',f'color=c={background}:s={cfg.width}x{cfg.height}:r={cfg.fps}:d={shot.seconds}',
-                    '-vf',vf,'-c:v','libx264','-pix_fmt','yuv420p',clip])
+                if asset.path:
+                    source = Path(asset.path).resolve()
+                    if not source.is_file(): raise ValueError('MATERIAL_FILE_MISSING:'+asset.id)
+                    if asset.kind != 'video': raise ValueError('UNSUPPORTED_MATERIAL_KIND:'+asset.kind)
+                    execute(['-i',str(source),'-t',str(shot.seconds),'-an','-vf',
+                        f'scale={cfg.width}:{cfg.height}:force_original_aspect_ratio=decrease,pad={cfg.width}:{cfg.height}:(ow-iw)/2:(oh-ih)/2',
+                        '-r',str(cfg.fps),'-c:v','libx264','-crf','20','-pix_fmt','yuv420p',clip])
+                else:
+                    execute(['-f','lavfi','-i',f'color=c={background}:s={cfg.width}x{cfg.height}:r={cfg.fps}:d={shot.seconds}',
+                        '-vf',vf,'-c:v','libx264','-pix_fmt','yuv420p',clip])
                 parts.append(clip)
                 timeline.append({'shot_id':shot.id,'asset_id':asset.id,'start_seconds':elapsed,
                     'duration_seconds':shot.seconds,'end_seconds':elapsed+shot.seconds,'synthetic':True})
@@ -144,10 +157,11 @@ class LocalFFmpegProvider(Provider):
             (tmp/'concat.txt').write_text(''.join(f"file '{part}'\n" for part in parts),encoding='utf-8')
             caption_bounds=measure_caption_pixels(scratch=tmp,width=cfg.width,height=cfg.height,seconds=elapsed)
             if not caption_bounds['within_safe_area']: raise ValueError('CAPTIONS_OUT_OF_BOUNDS_OR_INVISIBLE')
-            execute(['-f','concat','-safe','0','-i','concat.txt','-f','lavfi','-i',
-                f'sine=frequency=330:sample_rate=48000:duration={elapsed}',
-                '-vf','subtitles=filename=captions.ass:fontsdir=fonts','-af','volume=0.10',
-                '-c:v','libx264','-crf','25','-c:a','aac','-b:a','96k','-pix_fmt','yuv420p','-shortest','final.mp4'])
+            audio_input = ['-i',str(Path(cfg.music_path).resolve())] if cfg.music_path else ['-f','lavfi','-i',f'sine=frequency=330:sample_rate=48000:duration={elapsed}']
+            audio_filter = f'afade=t=in:d=0.35,afade=t=out:st={max(0,elapsed-1)}:d=1' if cfg.music_path else 'volume=0.10'
+            execute(['-f','concat','-safe','0','-i','concat.txt',*audio_input,
+                '-vf','subtitles=filename=captions.ass:fontsdir=fonts','-af',audio_filter,
+                '-c:v','libx264','-crf','22','-c:a','aac','-b:a','160k','-pix_fmt','yuv420p','-shortest','final.mp4'])
             execute(['-ss',str(min(1,elapsed/2)),'-i','final.mp4','-frames:v','1','preview.png'])
             (tmp/'timeline.json').write_text(json.dumps(timeline,indent=2),encoding='utf-8')
             # FFmpeg/filter paths use fixed relative names in a private scratch dir;
@@ -156,7 +170,7 @@ class LocalFFmpegProvider(Provider):
                 os.replace(tmp/name,destination.with_suffix(suffix))
             os.replace(tmp/'final.mp4',destination)
             job.media_qa={'font':{'available':True,'name':family,'sha256':hashlib.sha256(font.read_bytes()).hexdigest()},
-                'caption_pixel_bounds':caption_bounds,'music':{'license':'SELF','source':'mathematical sine tone; compatibility demo, not a finished soundtrack'}}
+                'caption_pixel_bounds':caption_bounds,'music':{'license':cfg.music_license if cfg.music_path else 'SELF','source':'operator-provided locally licensed soundtrack' if cfg.music_path else 'mathematical sine tone; compatibility demo, not a finished soundtrack','sha256':hashlib.sha256(Path(cfg.music_path).read_bytes()).hexdigest() if cfg.music_path else None}}
         return str(destination)
 
 def probe_media(path:Path)->dict:

@@ -1,0 +1,74 @@
+[
+  {
+    "shot_id": "original-01",
+    "asset_id": "original-01",
+    "start_seconds": 0.0,
+    "duration_seconds": 6,
+    "end_seconds": 6.0,
+    "synthetic": true
+  },
+  {
+    "shot_id": "original-02",
+    "asset_id": "original-02",
+    "start_seconds": 6.0,
+    "duration_seconds": 6,
+    "end_seconds": 12.0,
+    "synthetic": true
+  },
+  {
+    "shot_id": "original-03",
+    "asset_id": "original-03",
+    "start_seconds": 12.0,
+    "duration_seconds": 6,
+    "end_seconds": 18.0,
+    "synthetic": true
+  },
+  {
+    "shot_id": "original-04",
+    "asset_id": "original-04",
+    "start_seconds": 18.0,
+    "duration_seconds": 6,
+    "end_seconds": 24.0,
+    "synthetic": true
+  },
+  {
+    "shot_id": "original-05",
+    "asset_id": "original-05",
+    "start_seconds": 24.0,
+    "duration_seconds": 6,
+    "end_seconds": 30.0,
+    "synthetic": true
+  },
+  {
+    "shot_id": "original-06",
+    "asset_id": "original-06",
+    "start_seconds": 30.0,
+    "duration_seconds": 6,
+    "end_seconds": 36.0,
+    "synthetic": true
+  },
+  {
+    "shot_id": "original-07",
+    "asset_id": "original-07",
+    "start_seconds": 36.0,
+    "duration_seconds": 6,
+    "end_seconds": 42.0,
+    "synthetic": true
+  },
+  {
+    "shot_id": "original-08",
+    "asset_id": "original-08",
+    "start_seconds": 42.0,
+    "duration_seconds": 6,
+    "end_seconds": 48.0,
+    "synthetic": true
+  },
+  {
+    "shot_id": "original-09",
+    "asset_id": "original-09",
+    "start_seconds": 48.0,
+    "duration_seconds": 6,
+    "end_seconds": 54.0,
+    "synthetic": true
+  }
+]

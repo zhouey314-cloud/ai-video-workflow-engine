@@ -8,8 +8,13 @@ def main() -> int:
         data=json.loads(Path(args.storyboard).read_text())
         config=dict(data.get('render',{}))
         if args.font:config['font_path']=args.font
+        elif config.get('font_path'):config['font_path']=str((Path(args.storyboard).resolve().parent / config['font_path']).resolve())
+        if config.get('music_path'):config['music_path']=str((Path(args.storyboard).resolve().parent / config['music_path']).resolve())
         job=Job(data['title'],data['script'],data['persona'],[Shot(**s) for s in data['shots']],data['budget_usd'],render=RenderConfig(**config))
-        assets=[Asset(**{**a,'tags':tuple(a['tags'])}) for a in json.loads(Path(args.assets).read_text())]
+        asset_records=json.loads(Path(args.assets).read_text())
+        for asset in asset_records:
+            if asset.get('path'):asset['path']=str((Path(args.assets).resolve().parent / asset['path']).resolve())
+        assets=[Asset(**{**a,'tags':tuple(a['tags'])}) for a in asset_records]
         provider={'mock':MockProvider(),'ffmpeg':LocalFFmpegProvider(),'external':ExternalProviderInterface()}[args.provider]
         output=Path(args.media_output if args.provider=='ffmpeg' else 'output/demo.json')
         result=run(job,assets,provider,output)

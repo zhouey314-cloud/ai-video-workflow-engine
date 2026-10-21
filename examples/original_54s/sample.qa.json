@@ -1,0 +1,87 @@
+{
+  "title": "交付，不止导出 / Cut, Set, Deliver",
+  "state": "HUMAN_REVIEW",
+  "gaps": [],
+  "failures": [],
+  "output": "examples/original_54s/sample.mp4",
+  "cost_usd": 0.0,
+  "budget_usd": 0,
+  "retries": 0,
+  "events": [
+    "SCRIPT",
+    "GROUNDED",
+    "STORYBOARD",
+    "MATERIAL",
+    "TIMELINE_PLANNED",
+    "RENDERED",
+    "QA:PASS",
+    "AWAITING_HUMAN_REVIEW"
+  ],
+  "synthetic_unverified": true,
+  "media_qa": {
+    "font": {
+      "available": true,
+      "name": "Noto Sans CJK SC",
+      "sha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a"
+    },
+    "caption_pixel_bounds": {
+      "method": "libass caption-only rendered pixels + FFmpeg bbox, 2 frames/second",
+      "measured_frames": 108,
+      "visible_frames": 108,
+      "safe_area": [
+        51,
+        25,
+        1229,
+        695
+      ],
+      "union": [
+        303,
+        631,
+        960,
+        659
+      ],
+      "within_safe_area": true,
+      "missing_glyphs": [],
+      "limits": "Caption-layer pixel bounds only; does not establish readability, semantic timing or full visual/human acceptance."
+    },
+    "music": {
+      "license": "SELF",
+      "source": "operator-provided locally licensed soundtrack",
+      "sha256": "c5545e033e5faaa63f4257503d4ab8da922e6afd4cc2d8ae31a39908a53718d1"
+    },
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 1280,
+          "height": 720,
+          "avg_frame_rate": "24/1"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "avg_frame_rate": "0/0"
+        }
+      ],
+      "format": {
+        "duration": "54.000000",
+        "size": "4224799"
+      }
+    },
+    "full_decode": true,
+    "black_intervals": [],
+    "black_detection": {
+      "minimum_seconds": 0.3,
+      "frame_black_fraction": 0.98,
+      "pixel_luma_threshold": 0.05
+    },
+    "audio_sample_peak_dbfs": -7.8,
+    "audio_peak_limit_dbfs": -0.5,
+    "audio_mean_volume_dbfs": -24.0
+  },
+  "artifact_sha256": "0a7f73e9a5a014a352aa5f27a2852b39e558546ccc38f93016785cf2fba0e1a9",
+  "acceptance_scope": "Actual local 54-second render and mechanical QA; user full-film review remains pending"
+}
