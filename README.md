@@ -46,6 +46,6 @@ MP4 QA now decodes the complete file, checks black intervals of at least 0.30 se
 
 ## Maintenance and release status
 
-The current source metadata is `0.1.0` in `pyproject.toml`. A historical GitHub `v1.0.0` demo Release exists; it does not establish production maturity, and no new version is proposed until that numbering conflict is resolved. See the [capability roadmap](ROADMAP.md), [changelog](CHANGELOG.md), [contribution guide](CONTRIBUTING.md), and [release checklist](docs/releases/RELEASE_CHECKLIST.md). New Release publication requires a separate decision.
+The current source metadata is the legacy `0.1.0` in `pyproject.toml`; GitHub `v1.0.0` is a historical demo snapshot, not a package version for current `main`. Use the checked-out source and Quick Start commands above for the current workflow. This documentation update creates no new Release. The next public release must use a unique version greater than `1.0.0` and align source metadata, tag and tested artifacts; old tags and downloads remain intact. See the [capability roadmap](ROADMAP.md), [changelog](CHANGELOG.md), [contribution guide](CONTRIBUTING.md), and [release checklist](docs/releases/RELEASE_CHECKLIST.md).
 
 MIT. See [LICENSE](LICENSE).
