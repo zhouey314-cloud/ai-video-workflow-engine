@@ -1,6 +1,6 @@
 # Release checklist
 
-The historical `v1.0.0` demo Release and source `0.1.0` metadata conflict. **BLOCKED:** choose and document a version strategy before creating another tag or publishing a Release. This checklist does not authorize publication.
+The historical `v1.0.0` demo Release and legacy source `0.1.0` metadata describe different snapshots. The next public release must use a unique version greater than `1.0.0`, with source metadata, tag and tested artifacts aligned. Preserve old tags/assets. Documentation-only maintenance does not require a new Release. This checklist does not itself authorize publication.
 
 - [ ] Decide the next version and confirm its order relative to historical tags; update source metadata and changelog consistently.
 - [ ] Run `python3 -m unittest discover -s tests -v` with FFmpeg/ffprobe present; confirm the real-render test is not skipped and CI passes.
