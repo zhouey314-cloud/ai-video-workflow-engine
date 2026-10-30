@@ -1,5 +1,10 @@
 # AI Video Workflow Engine
 
+为需要重复导出和交接视频的内容团队提供一条可追溯链路：素材清单 → 时间轴与字幕 → 实际渲染 → 媒体检查 → 带校验清单的交付包。我的工作集中在流程编排、失败处理、FFmpeg 集成和验收记录。
+
+[生成与校验完整交付包](docs/DELIVERY_BUNDLES.md) · [实际 54 秒样片](examples/original_54s/sample.mp4)
+
+
 **A reproducible video-workflow engine from asset checks to a real FFmpeg render and human QA gate.** It solves the handoff problem where a file exists but the inputs, failure state or approval are unclear.
 
 **OFFLINE_ENGINEERING_DEMO / 54s USER-APPROVED SAMPLE** · [Watch 54-second original animation](examples/original_54s/sample.mp4) · [Six-second compatibility fixture](examples/demo-output.mp4) · [Case study](docs/case-study.md) · [Resume bullets](docs/resume-bullets.md) · [Interview notes](docs/interview-notes.md)

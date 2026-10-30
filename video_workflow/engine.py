@@ -61,6 +61,7 @@ class Job:
     media_qa: dict=field(default_factory=dict)
 
 class Provider:
+    output_suffix = ".json"
     def render(self, job:Job, assets:list[Asset], destination:Path)->str:
         raise NotImplementedError
 
@@ -94,6 +95,7 @@ def _caption_lines(text: str, width: int, font_size: int) -> list[str]:
 
 
 class LocalFFmpegProvider(Provider):
+    output_suffix = ".mp4"
     def render(self, job:Job, assets:list[Asset], destination:Path)->str:
         for binary in ('ffmpeg','ffprobe'):
             if not shutil.which(binary): raise RuntimeError('NOT_CONFIGURED: '+binary)
@@ -178,10 +180,12 @@ def probe_media(path:Path)->dict:
     return json.loads(result.stdout)
 
 def validate(job:Job)->None:
+    if not all(isinstance(v,str) for v in (job.title,job.script,job.persona)): raise ValueError('text inputs must be strings')
     if not job.title.strip() or not job.script.strip() or not job.persona.strip(): raise ValueError("missing input")
-    if not job.shots or any(not math.isfinite(s.seconds) or s.seconds<=0 or not s.id for s in job.shots): raise ValueError("invalid storyboard")
+    if not job.shots or any(not isinstance(s,Shot) or type(s.seconds) not in (int,float) or not math.isfinite(s.seconds) or s.seconds<=0 or not isinstance(s.id,str) or not s.id or not isinstance(s.requested_tag,str) or not isinstance(s.narration,str) for s in job.shots): raise ValueError("invalid storyboard")
     if len({s.id for s in job.shots})!=len(job.shots): raise ValueError("duplicate shot")
-    if not math.isfinite(job.budget_usd) or job.budget_usd<0: raise ValueError("invalid budget")
+    if type(job.budget_usd) not in (int,float) or not math.isfinite(job.budget_usd) or job.budget_usd<0: raise ValueError("invalid budget")
+    if any(type(v) is not int for v in (job.render.width,job.render.height,job.render.fps)): raise ValueError('integer render dimensions/fps required')
     if job.render.width < 320 or job.render.height < 180 or job.render.width%2 or job.render.height%2 or not 1 <= job.render.fps <= 60: raise ValueError("invalid render dimensions/fps")
 
 def retrieve(shots:list[Shot],assets:list[Asset])->tuple[list[Asset],list[str]]:

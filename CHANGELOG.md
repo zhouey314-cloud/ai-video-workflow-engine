@@ -19,3 +19,7 @@ This file records source changes; a passing test is not human video approval.
 ## Historical public demo release
 
 GitHub lists `v1.0.0` (2026-09-23) for the offline engineering demo. Current `pyproject.toml` source metadata is the legacy `0.1.0`; these describe different historical snapshots and are not interchangeable install targets. Follow the forward-only version policy above for the next release. The historical release is not evidence of production readiness or independent human acceptance.
+
+## 2026-10-30 · Verifiable delivery bundles
+
+Add fresh-directory job bundles with input/artifact hashes, complete QA, fail-closed verification and cleanup. Original CLI and artifact-specific human approval remain unchanged. 56 tests including a real encoded bundle.
