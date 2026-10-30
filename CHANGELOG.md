@@ -22,4 +22,4 @@ GitHub lists `v1.0.0` (2026-09-23) for the offline engineering demo. Current `py
 
 ## 2026-10-30 · Verifiable delivery bundles
 
-Add fresh-directory job bundles with input/artifact hashes, complete QA, fail-closed verification and cleanup. Original CLI and artifact-specific human approval remain unchanged. 55 tests including a real encoded bundle.
+Add fresh-directory job bundles with input/artifact hashes, complete QA, fail-closed verification and cleanup. Original CLI and artifact-specific human approval remain unchanged. 56 tests including a real encoded bundle.

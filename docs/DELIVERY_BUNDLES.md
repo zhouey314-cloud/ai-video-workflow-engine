@@ -14,4 +14,4 @@ python -m video_workflow.cli --verify-bundle output/job-001
 
 `--verify-bundle` 只做本地校验，不重渲染、不付费。失败返回非零。所有正式业务素材仍应由操作员确认权利；当前示例是原创/合成素材。原有 54 秒样片的批准只绑定其历史文件哈希，不扩展到新任务。
 
-本轮 55 条测试含真实 FFmpeg 交付包、篡改、路径和失败回收，保留全部原测试与样片批准记录。CLI 返回 HUMAN_REVIEW 并不授予 APPROVED。
+本轮 56 条测试含真实 FFmpeg 交付包、篡改、路径和失败回收，保留全部原测试与样片批准记录。CLI 返回 HUMAN_REVIEW 并不授予 APPROVED。

@@ -116,3 +116,38 @@ class BundleTests(unittest.TestCase):
                 p.write_text(json.dumps(value))
                 with self.assertRaises(ValueError):
                     verify_bundle(dest)
+
+    def test_invalid_cli_input_still_writes_failure_json(self):
+        import subprocess, sys
+
+        root = Path(__file__).resolve().parents[1]
+        valid = json.loads((root / "examples/storyboard.json").read_text())
+        for index, value in enumerate(
+            [None, {**valid, "title": 123}, {**valid, "budget_usd": True}]
+        ):
+            with self.subTest(value=value):
+                source = self.root / f"input-{index}.json"
+                source.write_text(json.dumps(value))
+                output = self.root / f"failure-{index}.json"
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "video_workflow.cli",
+                        "--storyboard",
+                        str(source),
+                        "--assets",
+                        str(root / "examples/assets.json"),
+                        "--output",
+                        str(output),
+                    ],
+                    cwd=root,
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(result.returncode, 1)
+                self.assertEqual(json.loads(result.stdout)["state"], "FAILED")
+                self.assertEqual(
+                    json.loads(output.read_text())["failures"], ["INPUT_INVALID"]
+                )
+                self.assertNotIn("Traceback", result.stderr)
