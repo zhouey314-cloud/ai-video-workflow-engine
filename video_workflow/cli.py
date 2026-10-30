@@ -3,21 +3,29 @@ from pathlib import Path
 from .engine import Asset,Shot,Job,State,RenderConfig,MockProvider,LocalFFmpegProvider,ExternalProviderInterface,run
 def main() -> int:
     import argparse
-    p=argparse.ArgumentParser();p.add_argument('--provider',choices=['mock','ffmpeg','external'],default='mock');p.add_argument('--output',default='output/report.json');p.add_argument('--media-output',default='output/demo.mp4');p.add_argument('--font');p.add_argument('--storyboard',default='examples/storyboard.json');p.add_argument('--assets',default='examples/assets.json');args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--provider',choices=['mock','ffmpeg','external'],default='mock');p.add_argument('--output',default='output/report.json');p.add_argument('--media-output',default='output/demo.mp4');p.add_argument('--font');p.add_argument('--storyboard',default='examples/storyboard.json');p.add_argument('--assets',default='examples/assets.json');p.add_argument('--bundle-dir');p.add_argument('--verify-bundle');args=p.parse_args()
     try:
+        from .delivery import create_bundle, verify_bundle
+        if args.verify_bundle:
+            print(json.dumps(verify_bundle(args.verify_bundle),indent=2));return 0
         data=json.loads(Path(args.storyboard).read_text())
+        if not isinstance(data,dict):raise ValueError('STORYBOARD_OBJECT_REQUIRED')
         config=dict(data.get('render',{}))
         if args.font:config['font_path']=args.font
         elif config.get('font_path'):config['font_path']=str((Path(args.storyboard).resolve().parent / config['font_path']).resolve())
         if config.get('music_path'):config['music_path']=str((Path(args.storyboard).resolve().parent / config['music_path']).resolve())
         job=Job(data['title'],data['script'],data['persona'],[Shot(**s) for s in data['shots']],data['budget_usd'],render=RenderConfig(**config))
         asset_records=json.loads(Path(args.assets).read_text())
+        if not isinstance(asset_records,list) or any(not isinstance(a,dict) for a in asset_records):raise ValueError('ASSET_ARRAY_REQUIRED')
         for asset in asset_records:
             if asset.get('path'):asset['path']=str((Path(args.assets).resolve().parent / asset['path']).resolve())
         assets=[Asset(**{**a,'tags':tuple(a['tags'])}) for a in asset_records]
         provider={'mock':MockProvider(),'ffmpeg':LocalFFmpegProvider(),'external':ExternalProviderInterface()}[args.provider]
         output=Path(args.media_output if args.provider=='ffmpeg' else 'output/demo.json')
-        result=run(job,assets,provider,output)
+        result=(create_bundle(job,assets,provider,args.bundle_dir,
+                  inputs=[args.storyboard,args.assets,*[a.path for a in assets if a.path],
+                          *([job.render.music_path] if job.render.music_path else [])])
+                if args.bundle_dir else run(job,assets,provider,output))
     except (OSError,ValueError,KeyError,TypeError) as exc:
         result={'state':'FAILED','failures':['INPUT_INVALID'],'events':['INPUT_INVALID:'+str(exc)],
                 'output':None,'gaps':[],'synthetic_unverified':True}
