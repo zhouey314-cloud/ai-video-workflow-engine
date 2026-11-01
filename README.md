@@ -2,30 +2,72 @@
 
 为需要重复导出和交接视频的内容团队提供一条可追溯链路：素材清单 → 时间轴与字幕 → 实际渲染 → 媒体检查 → 带校验清单的交付包。我的工作集中在流程编排、失败处理、FFmpeg 集成和验收记录。
 
-[生成与校验完整交付包](docs/DELIVERY_BUNDLES.md) · [实际 54 秒样片](examples/original_54s/sample.mp4)
+[播放 54 秒原创动画](examples/original_54s/sample.mp4) · [样片源码、素材与复现](examples/original_54s/README.md) · [生成与校验完整交付包](docs/DELIVERY_BUNDLES.md)
 
 
 **A reproducible video-workflow engine from asset checks to a real FFmpeg render and human QA gate.** It solves the handoff problem where a file exists but the inputs, failure state or approval are unclear.
 
-**OFFLINE_ENGINEERING_DEMO / 54s USER-APPROVED SAMPLE** · [Watch 54-second original animation](examples/original_54s/sample.mp4) · [Six-second compatibility fixture](examples/demo-output.mp4) · [Case study](docs/case-study.md) · [Resume bullets](docs/resume-bullets.md) · [Interview notes](docs/interview-notes.md)
+**LOCAL WORKFLOW / 54s USER-APPROVED ANIMATION** · [Watch the original animation](examples/original_54s/sample.mp4) · [Case study](docs/case-study.md) · [Project contributions](docs/resume-bullets.md) · [Interview notes](docs/interview-notes.md)
 
 [![CI](https://github.com/zhouey314-cloud/ai-video-workflow-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/zhouey314-cloud/ai-video-workflow-engine/actions/workflows/ci.yml)
 
-![Opening frame of the reproducible six-second synthetic FFmpeg sample](examples/demo-output.png)
+![Actual frames from the nine-shot, 54-second original procedural animation](examples/original_54s/contact-sheet.jpg)
 
 Independent clean-room framework for synthetic video production. No company pipeline source, customer media, voice data, internal prompt or paid provider call is included.
 
 ![Workflow architecture](docs/images/architecture.svg)
 
-## Demo and quick start
+## Source installation and quick start
 
-Python 3.10+: `python3 -m unittest discover -s tests -v`; `python3 -m video_workflow.cli`. The mock run writes `output/demo.json` and `output/report.json`. The real synthetic FFmpeg run:
+Requirements: Python 3.10+, FFmpeg and ffprobe. The original-animation generator also needs the pinned Pillow dependency and an available licensed CJK font. From a fresh directory, use the source snapshot verified on 2026-10-30:
 
 ```bash
-python3 -m video_workflow.cli --provider ffmpeg --media-output examples/demo-output.mp4 --output examples/demo-qa.json
+git clone https://github.com/zhouey314-cloud/ai-video-workflow-engine.git
+cd ai-video-workflow-engine
+git checkout --detach 367badd7c3ed2314ec1014964fb8ed3931dc019e
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r examples/original_54s/requirements.txt
+ffmpeg -version
+ffprobe -version
+python -m video_workflow.cli --help
 ```
 
-This walks synthetic input → storyboard → asset-tag retrieval → timeline → two distinct title-card shots → burned test subtitles + generated tone → render → ffprobe QA → human-review gate. [Watch the 6-second synthetic MP4](examples/demo-output.mp4) (72 KB). [Opening frame](examples/demo-output.png) · [closing frame](examples/demo-frame-2.png) · [captions](examples/demo-output.srt) · [timeline](examples/demo-output.timeline.json) · [QA report](examples/demo-qa.json). To reproduce the closing frame: `ffmpeg -ss 4 -i examples/demo-output.mp4 -frames:v 1 examples/demo-frame-2.png`. `--provider external` remains `NOT_CONFIGURED` and fails closed.
+The commands below run from that checkout. This is a source workflow; the historical GitHub `v1.0.0` tag is not a download of current `main`. The source package metadata remains the legacy `0.1.0`; this documentation does not create a new version or Release.
+
+### Produce a complete task bundle
+
+```bash
+mkdir -p output
+python -m video_workflow.cli --provider ffmpeg --bundle-dir output/job-001 --output output/job-001.receipt.json
+python -m video_workflow.cli --verify-bundle output/job-001
+```
+
+Choose a new bundle directory for every task. The bundle contains MP4, SRT, ASS, timeline, preview, QA and a manifest with input/output hashes. Creation publishes only a mechanically checked complete directory; verification rejects missing, changed, unsafe or unlisted files. See [bundle commands, failure behavior and review limits](docs/DELIVERY_BUNDLES.md). A successful run reaches `HUMAN_REVIEW`; it does not inherit the old sample's approval.
+
+### Reproduce the 54-second original animation
+
+Set `VIDEO_FONT` to an existing licensed CJK font. For example, Debian/Ubuntu's `fonts-noto-cjk` package supplies `/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc`; select the actual font path on other systems.
+
+```bash
+VIDEO_FONT=/path/to/NotoSansCJK-Regular.ttc
+python examples/original_54s/generate.py --output output/original54 --font "$VIDEO_FONT"
+python -m video_workflow.cli --provider ffmpeg --storyboard output/original54/storyboard.json --assets output/original54/assets.json --font "$VIDEO_FONT" --bundle-dir output/original54-delivery --output output/original54.receipt.json
+python -m video_workflow.cli --verify-bundle output/original54-delivery
+```
+
+These are new outputs, subject to fresh human review. The generator, asset rights, sample hash and CI's shorter integration fixture are documented in the [sample reproduction guide](examples/original_54s/README.md).
+
+### Small compatibility fixture
+
+The six-second fixture remains useful for checking the FFmpeg path before the complete animation. The default mock command `python -m video_workflow.cli` writes workflow JSON without real media; the real synthetic render is:
+
+```bash
+mkdir -p output
+python -m video_workflow.cli --provider ffmpeg --media-output output/compat-fixture.mp4 --output output/compat-fixture.qa.json
+```
+
+This walks synthetic input → storyboard → asset-tag retrieval → timeline → two distinct title-card shots → burned test subtitles + generated tone → render → ffprobe QA → human-review gate. The command writes a fresh local fixture under `output/`; committed examples remain available for comparison: [6-second synthetic MP4](examples/demo-output.mp4) (72 KB), [opening frame](examples/demo-output.png), [closing frame](examples/demo-frame-2.png), [captions](examples/demo-output.srt), [timeline](examples/demo-output.timeline.json) and [QA report](examples/demo-qa.json). To inspect the new closing frame: `ffmpeg -ss 4 -i output/compat-fixture.mp4 -frames:v 1 output/compat-frame-2.png`. `--provider external` remains `NOT_CONFIGURED` and fails closed.
 
 The CLI writes the workflow JSON report to `--output` and stdout before exiting. Exit code `0` means mechanical QA passed and the workflow reached `HUMAN_REVIEW` (or `APPROVED` if supplied by the workflow); pending human review is a successful CLI run, not human approval. Exit code `1` means the workflow failed or stopped with a material `GAP`. Use the JSON `state`, `failures`, and `events` to diagnose the result.
 
@@ -43,7 +85,9 @@ Input → Script → Persona/Grounding → Storyboard → licensed synthetic mat
 
 ## Verification and boundaries
 
-47 tests cover state, retrieval, missing material, real FFmpeg render, media stream/duration QA, provider configuration and review gates. Five delivery regressions add special-character output paths, explicit invalid-font failure without overwriting an existing artifact, recovery after a blocked destination, long Chinese captions and black/clipped media rejection. Existing CLI success/failure/GAP exit behavior is retained. One stdlib hash-binding check protects the exact user-reviewed artifact and preserves its historical machine state. Five additional original-sample integration cases use real 4.5-second encodes of all nine scenes, checking licensed audio/video input, missing material, dense-caption rejection and missing-glyph failure. Install the optional sample dependency before running all 47 tests: `python -m pip install -r examples/original_54s/requirements.txt`.
+The suite covers workflow state, missing material, real FFmpeg rendering, media QA, provider configuration, review gates and complete delivery bundles. Regressions include special-character paths, invalid-font failure without overwriting existing media, recovery after a blocked destination, dense Chinese captions, black/clipped media, manifest tampering and failed-job cleanup. A hash-binding check protects the exact reviewed animation and preserves its historical machine state. Short original-sample integrations encode all nine scenes in 4.5 seconds; they do not replace the full 54-second artifact or its human review.
+
+After installing the dependency shown above, run `python -m unittest discover -s tests -v`. The [2026-10-30 CI for source `367badd`](https://github.com/zhouey314-cloud/ai-video-workflow-engine/actions/runs/40997957439) passed 56 tests on Linux with FFmpeg and CJK fonts installed. That is a fixed execution record, not a model-quality score or a promise about future source revisions.
 
 MP4 QA now decodes the complete file, checks black intervals of at least 0.30 seconds, measures sample audio peak (limit −0.5 dBFS), records mean volume and verifies expected resolution/duration/audio. Subtitles use a private fixed-name ASS/font workspace; user paths never enter FFmpeg filter syntax. A separate render of the identical subtitle layer measures actual libass glyph pixel bounds at 2 fps, including wrapping and missing-glyph diagnostics. The 2 fps check is temporal sampling, not every-frame coverage. This measures subtitle-layer geometry, not readability or full-frame visual quality. Audio uses a sample peak, not a true-peak measurement. Black intervals shorter than 0.30 seconds are outside this detector gate. `--font /path/to/font.ttf` selects an available local font; `--storyboard` and `--assets` choose explicit input files. Missing/invalid input produces a nonzero JSON failure. Over-dense captions are rejected rather than truncated. FFmpeg failures preserve an existing MP4; generated sidecars are promoted only after FFmpeg completes.
 
