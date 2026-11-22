@@ -1,13 +1,18 @@
 # AI Video Workflow Engine
 
-为需要重复导出和交接视频的内容团队提供一条可追溯链路：素材清单 → 时间轴与字幕 → 实际渲染 → 媒体检查 → 带校验清单的交付包。我的工作集中在流程编排、失败处理、FFmpeg 集成和验收记录。
+**把“导出了视频”变成可复核的交付。** 该工具从明确的素材清单和时间轴执行 FFmpeg 渲染，产出 MP4、字幕、媒体检查结果与带 SHA-256 清单的交付包。接手人可以核对收到的文件，排查失败，并独立完成审片。
 
-[播放 54 秒原创动画](examples/original_54s/sample.mp4) · [样片源码、素材与复现](examples/original_54s/README.md) · [生成与校验完整交付包](docs/DELIVERY_BUNDLES.md)
+*Reproducible FFmpeg delivery: licensed inputs, captions, media QA, a checksum manifest, and a separate human review gate.*
 
+[看 54 秒原创样片](examples/original_54s/sample.mp4) · [样片源码、素材与复现](examples/original_54s/README.md) · [从源码跑一个交付包](#produce-a-complete-task-bundle) · [交付包与故障说明](docs/DELIVERY_BUNDLES.md)
 
-**A reproducible video-workflow engine from asset checks to a real FFmpeg render and human QA gate.** It solves the handoff problem where a file exists but the inputs, failure state or approval are unclear.
+| 想验证什么 | 从这里开始 |
+| --- | --- |
+| 看实际成片，不安装 | [54 秒视频](examples/original_54s/sample.mp4) · [九镜头实帧](examples/original_54s/contact-sheet.jpg) · [这份文件的人工批准记录](examples/original_54s/human-review.json) |
+| 在本地跑通交付 | 下方 Quick Start 使用内置六秒合成素材；运行 `--verify-bundle` 检查完整性，不需要模型或 API Key |
+| 核对测试与失败行为 | [固定源码 CI](https://github.com/zhouey314-cloud/ai-video-workflow-engine/actions/runs/41287883482) · [交付包契约](docs/DELIVERY_BUNDLES.md) · [案例研究](docs/case-study.md) / [贡献明细](docs/resume-bullets.md) / [面试复盘](docs/interview-notes.md) |
 
-**LOCAL WORKFLOW / 54s USER-APPROVED ANIMATION** · [Watch the original animation](examples/original_54s/sample.mp4) · [Case study](docs/case-study.md) · [Project contributions](docs/resume-bullets.md) · [Interview notes](docs/interview-notes.md)
+**完整性、机械检查、人工批准是三件事。** `VERIFIED` 指文件和清单一致，`HUMAN_REVIEW` 指机械检查通过后等待审片。54 秒样片的批准只绑定其历史文件哈希，不能授予新渲染、剪辑或交付包。CI 使用短合成素材，不用客户媒体或生产流程。
 
 [![CI](https://github.com/zhouey314-cloud/ai-video-workflow-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/zhouey314-cloud/ai-video-workflow-engine/actions/workflows/ci.yml)
 
@@ -19,12 +24,12 @@ Independent clean-room framework for synthetic video production. No company pipe
 
 ## Source installation and quick start
 
-Requirements: Python 3.10+, FFmpeg and ffprobe. The original-animation generator also needs the pinned Pillow dependency and an available licensed CJK font. From a fresh directory, use the source snapshot verified on 2026-10-30:
+Requirements: Python 3.10+, FFmpeg and ffprobe. The original-animation generator also needs the pinned Pillow dependency and an available licensed CJK font. From a fresh directory, use the [source snapshot verified by CI](https://github.com/zhouey314-cloud/ai-video-workflow-engine/actions/runs/41287883482):
 
 ```bash
 git clone https://github.com/zhouey314-cloud/ai-video-workflow-engine.git
 cd ai-video-workflow-engine
-git checkout --detach 367badd7c3ed2314ec1014964fb8ed3931dc019e
+git checkout --detach 04b749a6743ad126dfad10b87d3b0e46090ac31f
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install -r examples/original_54s/requirements.txt
@@ -43,7 +48,7 @@ python -m video_workflow.cli --provider ffmpeg --bundle-dir output/job-001 --out
 python -m video_workflow.cli --verify-bundle output/job-001
 ```
 
-Choose a new bundle directory for every task. The bundle contains MP4, SRT, ASS, timeline, preview, QA and a manifest with input/output hashes. Creation publishes only a mechanically checked complete directory; verification rejects missing, changed, unsafe or unlisted files. See [bundle commands, failure behavior and review limits](docs/DELIVERY_BUNDLES.md). A successful run reaches `HUMAN_REVIEW`; it does not inherit the old sample's approval.
+Choose a new bundle directory for every task. The bundle contains MP4, SRT, ASS, timeline, preview, QA and a manifest with input/output hashes. Creation publishes only a mechanically checked complete directory; verification rejects missing, changed, unsafe or unlisted files. See [bundle commands, failure behavior and review limits](docs/DELIVERY_BUNDLES.md). The verifier prints `status: VERIFIED`, `state: HUMAN_REVIEW` and `human_approval: NOT_GRANTED` in its JSON receipt. If a file is missing or its checksum differs, verification exits nonzero. A successful verification is not permission to publish.
 
 ### Reproduce the 54-second original animation
 
